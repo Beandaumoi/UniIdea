@@ -80,8 +80,11 @@ function Navbar() {
               </button>
             ) : (
               <button
-                className="cursor-not-allowed text-gray-400"
-                onClick={() => alert("Bạn cần đăng nhập để đăng ký ý tưởng!")}
+                className="cursor-pointer"
+                onClick={() => {
+                  navigate("/login");
+                  window.scrollTo(0, 0);
+                }}
               >
                 Đăng ký ý tưởng
               </button>
