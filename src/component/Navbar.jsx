@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react"; // Xóa useEffect vì không cần nữa
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux"; // Thêm Redux hooks
 import { FaUserCircle } from "react-icons/fa";
 import { Link } from "react-scroll";
 import {
@@ -8,6 +9,7 @@ import {
   IoLockClosed,
   IoLogOut,
 } from "react-icons/io5";
+import { clearToken } from "../redux/authSlice"; // Import action clearToken
 
 function Navbar() {
   const categories = [
@@ -20,24 +22,21 @@ function Navbar() {
   ];
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { accessToken, user } = useSelector((state) => state.auth); // Lấy token và user từ Redux
   const [showLibraryDropdown, setShowLibraryDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [avatar, setAvatar] = useState("");
   let libraryTimeoutId = null;
   let userTimeoutId = null;
 
-  useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (user) {
-      setIsLoggedIn(true);
-      setAvatar(user.avatar);
-    }
-  }, []);
+  // Kiểm tra trạng thái đăng nhập dựa trên token
+  const isLoggedIn = !!accessToken;
+  const avatar = user?.avatar || "https://i.pravatar.cc/40"; // Lấy avatar từ user, fallback nếu không có
 
   const handleLogout = () => {
+    dispatch(clearToken()); // Xóa token và user khỏi Redux
+    localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
-    setIsLoggedIn(false);
     navigate("/");
   };
 
@@ -45,6 +44,7 @@ function Navbar() {
     navigate(`/list-idea?category=${encodeURIComponent(category)}`);
     window.scrollTo(0, 0);
   };
+
   return (
     <header>
       <nav className="fixed top-0 left-0 right-0 flex items-center justify-between px-6 py-3 shadow-md bg-white z-20">
@@ -54,7 +54,7 @@ function Navbar() {
             navigate("/");
             window.scrollTo(0, 0);
           }}
-          className=" cursor-pointer ml-48 text-5xl font-bold text-black"
+          className="cursor-pointer ml-48 text-5xl font-bold text-black"
         >
           Uni<span className="text-blue-600">I</span>
           <span className="text-blue-600 text-2xl">dea</span>
@@ -62,12 +62,15 @@ function Navbar() {
 
         {/* Menu Items */}
         <ul className="hidden md:flex space-x-6 text-gray-700">
-          <li className="cursor-pointer hover:text-blue-600">
+          <li
+            className="cursor-pointer hover:text-blue-600"
+            onClick={() => navigate("/")}
+          >
             <Link to="about" smooth={true} duration={100}>
               Giới thiệu
             </Link>
           </li>
-          <li className=" hover:text-blue-600">
+          <li className="hover:text-blue-600">
             {isLoggedIn ? (
               <button
                 className="cursor-pointer"
@@ -164,7 +167,7 @@ function Navbar() {
               }}
             >
               <img
-                src={avatar || "https://i.pravatar.cc/40"}
+                src={avatar}
                 alt="Avatar"
                 className="w-10 h-10 rounded-full cursor-pointer"
               />

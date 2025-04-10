@@ -5,109 +5,32 @@ import {
   IoFilter,
 } from "react-icons/io5";
 import { useLocation, useNavigate } from "react-router-dom";
-
 import { newspaper_image } from "../assets/images";
-
-const ideas = [
-  {
-    id: 1,
-    image: newspaper_image,
-    name: "Ứng dụng AI nhận diện hình ảnh",
-    description: "Dự án áp dụng AI để nhận diện hình ảnh chính xác.",
-    rating: 4.5,
-    school: "Đại học Bách Khoa",
-    category: "Công nghệ thông tin",
-  },
-  {
-    id: 2,
-    image: newspaper_image,
-    name: "Robot tự động vận chuyển",
-    description: "Dự án thiết kế robot giúp tự động hóa vận chuyển.",
-    rating: 4.7,
-    school: "Đại học Công nghiệp",
-    category: "Kỹ thuật ô tô",
-  },
-  {
-    id: 3,
-    image: newspaper_image,
-    name: "Ứng dụng AI nhận diện hình ảnh",
-    description: "Dự án áp dụng AI để nhận diện hình ảnh chính xác.",
-    rating: 4.5,
-    school: "Đại học Bách Khoa",
-    category: "Khoa học máy tính",
-  },
-  {
-    id: 4,
-    image: newspaper_image,
-    name: "Robot tự động vận chuyển",
-    description: "Dự án thiết kế robot giúp tự động hóa vận chuyển.",
-    rating: 4.7,
-    school: "Đại học Công nghiệp",
-    category: "Dệt may",
-  },
-  {
-    id: 5,
-    image: newspaper_image,
-    name: "Ứng dụng AI nhận diện hình ảnh",
-    description: "Dự án áp dụng AI để nhận diện hình ảnh chính xác.",
-    rating: 4.5,
-    school: "Đại học Bách Khoa",
-    category: "Cơ khí chế tạo",
-  },
-  {
-    id: 6,
-    image: newspaper_image,
-    name: "Robot tự động vận chuyển",
-    description: "Dự án thiết kế robot giúp tự động hóa vận chuyển.",
-    rating: 4.7,
-    school: "Đại học Công nghiệp",
-    category: "Công nghệ sinh học",
-  },
-  {
-    id: 7,
-    image: newspaper_image,
-    name: "Ứng dụng AI nhận diện hình ảnh",
-    description: "Dự án áp dụng AI để nhận diện hình ảnh chính xác.",
-    rating: 4.5,
-    school: "Đại học Bách Khoa",
-    category: "Công nghệ sinh học",
-  },
-  {
-    id: 8,
-    image: newspaper_image,
-    name: "Robot tự động vận chuyển",
-    description: "Dự án thiết kế robot giúp tự động hóa vận chuyển.",
-    rating: 4.7,
-    school: "Đại học Công nghiệp",
-    category: "Công nghệ sinh học",
-  },
-];
-
-const categories = [
-  "Tất cả",
-  "Công nghệ thông tin",
-  "Kỹ thuật ô tô",
-  "Khoa học máy tính",
-  "Dệt may",
-  "Cơ khí chế tạo",
-  "Công nghệ sinh học",
-];
+import AuthApi from "../network/AuthApi";
 
 const ListIdeaScreen = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const initialCategory = params.get("category") || "Tất cả";
+  const searchQuery = params.get("search") || ""; // Lấy tham số search từ URL
 
-  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+  const [ideas, setIdeas] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filterOpen, setFilterOpen] = useState(true);
+  const [filterOpen, setFilterOpen] = useState(false);
   const itemsPerPage = 6;
 
-  const filteredIdeas = ideas.filter(
-    (idea) =>
-      selectedCategory === "Tất cả" || idea.category === selectedCategory
-  );
+  const filteredIdeas = ideas.filter((idea) => {
+    const matchesDepartment =
+      selectedDepartmentId === null ||
+      idea.department?.id === selectedDepartmentId;
+    const matchesSearch =
+      searchQuery === "" ||
+      idea.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesDepartment && matchesSearch;
+  });
 
   const totalPages = Math.ceil(filteredIdeas.length / itemsPerPage);
   const paginatedIdeas = filteredIdeas.slice(
@@ -116,8 +39,41 @@ const ListIdeaScreen = () => {
   );
 
   useEffect(() => {
-    setSelectedCategory(initialCategory);
-  }, [initialCategory]);
+    const fetchIdeasList = async () => {
+      try {
+        const response = await AuthApi.topics();
+        console.log("Danh sách ý tưởng từ API:", response?.data?.result);
+        setIdeas(response.data.result || response.data || []);
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách ý tưởng:", error);
+      }
+    };
+
+    const fetchDepartments = async () => {
+      try {
+        const response = await AuthApi.departments();
+        console.log("Danh sách departments từ API:", response?.data?.result);
+        const departmentsData = response.data.result || response.data || [];
+        setDepartments([{ id: null, name: "Tất cả" }, ...departmentsData]);
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách departments:", error);
+      }
+    };
+
+    fetchIdeasList();
+    fetchDepartments();
+  }, []);
+
+  useEffect(() => {
+    if (initialCategory === "Tất cả") {
+      setSelectedDepartmentId(null);
+    } else {
+      const selectedDept = departments.find(
+        (dept) => dept.name === initialCategory
+      );
+      setSelectedDepartmentId(selectedDept ? selectedDept.id : null);
+    }
+  }, [initialCategory, departments]);
 
   return (
     <div className="px-20 pt-30 py-6">
@@ -135,59 +91,66 @@ const ListIdeaScreen = () => {
         <div className="bg-gray-100 p-4 rounded-lg mb-4">
           <h3 className="text-lg font-semibold mb-2">Chọn chuyên ngành</h3>
           <div className="flex space-x-4 overflow-x-auto">
-            {categories.map((category) => (
-              <button
-                key={category}
-                className={`px-4 py-2 rounded-lg whitespace-nowrap cursor-pointer ${
-                  selectedCategory === category
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-300"
-                }`}
-                onClick={() => {
-                  setSelectedCategory(category);
-                  setCurrentPage(1);
-                  setFilterOpen(true);
-                }}
-              >
-                {category}
-              </button>
-            ))}
+            {departments.length > 0 ? (
+              departments.map((department) => (
+                <button
+                  key={department.id ?? "all"}
+                  className={`px-4 py-2 rounded-lg whitespace-nowrap cursor-pointer ${
+                    selectedDepartmentId === department.id
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-300"
+                  }`}
+                  onClick={() => {
+                    setSelectedDepartmentId(department.id);
+                    setCurrentPage(1);
+                    setFilterOpen(true);
+                  }}
+                >
+                  {department.name}
+                </button>
+              ))
+            ) : (
+              <p>Đang tải danh sách chuyên ngành...</p>
+            )}
           </div>
         </div>
       )}
 
       {/* Danh sách ý tưởng */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {paginatedIdeas.map((idea) => (
-          <button
-            onClick={() => {
-              navigate("/newspaper");
-              window.scrollTo(0, 0);
-            }}
-            key={idea.id}
-            className="bg-white p-4 shadow-lg rounded-lg hover:-translate-y-2 transition-transform duration-300 ease-in-out cursor-pointer"
-          >
-            <img
-              src={idea.image}
-              alt={idea.name}
-              className="w-full max-h-80 object-cover rounded"
-            />
-            <a
+        {paginatedIdeas.length > 0 ? (
+          paginatedIdeas.map((idea) => (
+            <button
               onClick={() => {
                 navigate("/newspaper");
                 window.scrollTo(0, 0);
               }}
-              className="text-xl font-semibold text-left hover:text-blue-600 cursor-pointer flex items-start mt-4"
+              key={idea.id}
+              className="bg-white p-4 shadow-lg rounded-lg hover:-translate-y-2 transition-transform duration-300 ease-in-out cursor-pointer"
             >
-              {idea.name}
-            </a>
-            <p className="text-gray-600 mt-1 text-left">{idea.description}</p>
-            <p className="text-sm text-gray-500 mt-2 text-left">
-              Trường: {idea.school}
-            </p>
-            <p className="text-yellow-500 mt-2 text-left">⭐ {idea.rating}</p>
-          </button>
-        ))}
+              <img
+                src={newspaper_image}
+                alt={idea.name}
+                className="w-full max-h-80 object-cover rounded"
+              />
+              <a
+                onClick={() => {
+                  navigate("/newspaper");
+                  window.scrollTo(0, 0);
+                }}
+                className="text-xl font-semibold text-left hover:text-blue-600 cursor-pointer flex items-start mt-4"
+              >
+                {idea.name}
+              </a>
+              <p className="text-gray-600 mt-1 text-left">{idea.description}</p>
+              <p className="text-sm text-gray-500 mt-2 text-left">
+                Trường: {idea.university?.name}
+              </p>
+            </button>
+          ))
+        ) : (
+          <p>Không có ý tưởng nào để hiển thị.</p>
+        )}
       </div>
 
       {/* Phân trang */}
@@ -212,7 +175,6 @@ const ListIdeaScreen = () => {
             {index + 1}
           </button>
         ))}
-
         <button
           className="px-3 py-2 rounded-lg flex items-center bg-gray-300 cursor-pointer hover:-translate-y-2 transition-transform duration-300 ease-in-out"
           onClick={() => setCurrentPage(currentPage + 1)}

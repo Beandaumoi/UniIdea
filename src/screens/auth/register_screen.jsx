@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { IoArrowBackSharp } from "react-icons/io5";
 
-import { backgroundMain } from "../assets/images";
+import { backgroundMain } from "../../assets/images";
+import AuthApi from "../../network/AuthApi";
 
 function RegisterScreen() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -22,7 +22,7 @@ function RegisterScreen() {
     return regex.test(email);
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
 
     // Kiểm tra email hợp lệ
@@ -39,6 +39,25 @@ function RegisterScreen() {
       return;
     } else {
       setPasswordError("");
+    }
+
+    // Tạo đối tượng params để gửi lên API
+    const params = {
+      name: fullName,
+      email,
+      password,
+    };
+
+    try {
+      const response = await AuthApi.signUp(params);
+      if (response && response.data) {
+        console.log("Đăng ký thành công:", response.data);
+        navigate("/login"); // Chuyển về trang đăng nhập sau khi đăng ký thành công
+      } else {
+        console.log("Đăng ký thất bại", response);
+      }
+    } catch (error) {
+      console.error("Lỗi khi đăng ký:", error);
     }
 
     console.log("Họ tên:", fullName, "Email:", email, "Mật khẩu:", password);
@@ -97,20 +116,6 @@ function RegisterScreen() {
               className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {emailError && <p className="text-red-500 text-sm">{emailError}</p>}
-          </div>
-
-          {/* Username */}
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              Tên đăng nhập
-            </label>
-            <input
-              type="text"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              required
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
           </div>
 
           {/* Mật khẩu */}

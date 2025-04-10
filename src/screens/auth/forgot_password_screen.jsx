@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { backgroundMain } from "../assets/images";
+import { backgroundMain } from "../../assets/images";
 
 function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");

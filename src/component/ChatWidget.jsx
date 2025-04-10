@@ -7,23 +7,34 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState([
     { sender: "bot", text: "Xin chào! Tôi có thể giúp gì cho bạn?" },
   ]);
-  const [input, setInput] = useState("");
+  const quickReplies = [
+    { question: "Bạn tên là gì?", answer: "Tôi là UniIdea Chatbot." },
+    {
+      question: "Hướng dẫn sử dụng",
+      answer: "Bạn có thể nhấn vào các câu hỏi để nhận câu trả lời tự động.",
+    },
+    {
+      question: "Liên hệ hỗ trợ",
+      answer: "Bạn có thể liên hệ qua email support@uniidea.com",
+    },
+  ];
 
-  const toggleChat = () => setIsOpen(!isOpen);
+  const toggleChat = () => {
+    if (isOpen) {
+      setMessages([{ sender: "bot", text: "Xin chào! Bạn muốn hỏi gì?" }]);
+    }
+    setIsOpen(!isOpen);
+  };
 
-  const sendMessage = () => {
-    if (input.trim() === "") return;
-    const userMessage = { sender: "user", text: input };
-    setMessages([...messages, userMessage]);
-    setInput("");
+  const sendQuickMessage = (question, answer) => {
+    setMessages([...messages, { sender: "user", text: question }]);
     setTimeout(() => {
-      const botReply = { sender: "bot", text: "Cảm ơn bạn đã nhắn tin!" };
-      setMessages((prev) => [...prev, botReply]);
+      setMessages((prev) => [...prev, { sender: "bot", text: answer }]);
     }, 1000);
   };
 
   return (
-    <div className="fixed bottom-5 left-5 flex items-end">
+    <div className="fixed bottom-5 left-5 flex items-end z-20">
       {/* Nút mở chat */}
       <motion.button
         onClick={toggleChat}
@@ -62,7 +73,7 @@ export default function ChatWidget() {
             initial={{ opacity: 0, x: -50, scale: 0.8 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: -50, scale: 0.8 }}
-            className="min-w-80 bg-white shadow-lg rounded-2xl p-3 border border-gray-200 flex flex-col absolute left-16 bottom-0 mb-7"
+            className="min-w-100 bg-white shadow-lg rounded-2xl p-3 border border-gray-200 flex flex-col absolute left-16 bottom-0 mb-7"
           >
             <div className="min-w-7">
               <div className="flex justify-between items-center border-b pb-2">
@@ -75,7 +86,7 @@ export default function ChatWidget() {
                   <IoClose size={18} className="cursor-pointer" />
                 </motion.button>
               </div>
-              <div className="flex-1 overflow-y-auto max-h-60 p-2 space-y-2">
+              <div className="flex-1 overflow-y-auto max-h-100 p-2 space-y-2">
                 {messages.map((msg, index) => (
                   <div
                     key={index}
@@ -90,19 +101,20 @@ export default function ChatWidget() {
                 ))}
               </div>
               <div className="flex border-t pt-2">
-                <input
-                  className="flex-1 p-2 text-sm focus:outline-none rounded-l-md"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                  placeholder="Nhập tin nhắn..."
-                />
-                <button
-                  onClick={sendMessage}
-                  className="cursor-pointer rounded-r-md"
-                >
-                  Gửi
-                </button>
+                {/* Các nút chọn nhanh */}
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {quickReplies.map((item, index) => (
+                    <button
+                      key={index}
+                      onClick={() =>
+                        sendQuickMessage(item.question, item.answer)
+                      }
+                      className="bg-blue-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-600 transition"
+                    >
+                      {item.question}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </motion.div>

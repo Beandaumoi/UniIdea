@@ -77,7 +77,7 @@ export default function NewspaperScreen() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto pt-20 bg-white mt-10 mb-10 p-6">
+    <div className="max-w-3xl mx-auto pt-20 bg-white mt-10 mb-10 p-6 text-justify">
       <h1 className="text-3xl font-bold text-gray-900 leading-tight">
         Đại học Bách khoa Hà Nội: Ứng dụng nông nghiệp thông minh
       </h1>

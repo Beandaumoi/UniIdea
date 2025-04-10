@@ -8,7 +8,7 @@ import {
   IoArrowBackSharp,
 } from "react-icons/io5";
 
-import { backgroundMain } from "../assets/images";
+import { backgroundMain } from "../../assets/images";
 
 function ChangePasswordScreen() {
   const navigate = useNavigate();

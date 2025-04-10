@@ -16,7 +16,7 @@ function Footer() {
         {/* Cột 1 - Thông tin IdeaScale */}
         <div>
           <h2 className="text-2xl font-bold">UniIdea</h2>
-          <p className="mt-4 text-gray-300">
+          <p className="mt-4 text-gray-300 text-justify">
             UniIdea là một giải pháp quản lý đổi mới nhằm truyền cảm hứng cho
             mọi người thực hiện hành động theo ý tưởng của họ. Ý tưởng của cộng
             đồng có thể thay đổi cuộc sống, doanh nghiệp của bạn và thế giới.
@@ -64,12 +64,16 @@ function Footer() {
           <h3 className="text-lg font-semibold mt-6">Theo chúng tôi</h3>
           <div className="flex space-x-4 mt-4 items-center">
             <a
+              target="_blank"
+              rel="noopener noreferrer"
               href="https://www.facebook.com/Daihoc.uneti"
               className="cursor-pointer hover:-translate-y-2 transition-transform duration-300 ease-in-out bg-blue-500 p-2 rounded-lg"
             >
               <IoLogoFacebook size={20} />
             </a>
             <a
+              target="_blank"
+              rel="noopener noreferrer"
               href="https://uneti.edu.vn/"
               className="cursor-pointer hover:-translate-y-2 transition-transform duration-300 ease-in-out bg-blue-500 p-2 rounded-lg"
             >
@@ -80,12 +84,16 @@ function Footer() {
               />
             </a>
             <a
+              target="_blank"
+              rel="noopener noreferrer"
               href="https://www.tiktok.com/@uneti1956"
               className="cursor-pointer hover:-translate-y-2 transition-transform duration-300 ease-in-out bg-blue-500 p-2 rounded-lg"
             >
               <IoLogoTiktok size={20} />
             </a>
             <a
+              target="_blank"
+              rel="noopener noreferrer"
               href="https://www.youtube.com/@UNETI_DKK"
               className="cursor-pointer hover:-translate-y-2 transition-transform duration-300 ease-in-out bg-blue-500 p-2 rounded-lg"
             >
