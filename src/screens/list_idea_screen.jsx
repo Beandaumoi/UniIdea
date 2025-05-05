@@ -12,24 +12,37 @@ const ListIdeaScreen = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
-  const initialCategory = params.get("category") || "Tất cả";
-  const searchQuery = params.get("search") || ""; // Lấy tham số search từ URL
+  const initialYear = params.get("year") || "Tất cả";
+  const initialAward = params.get("award") || "all";
+  const searchQuery = params.get("search") || "";
+
+  const awards = [
+    { id: "all", name: "Tất cả" },
+    { id: "first", name: "Giải Nhất" },
+    { id: "second", name: "Giải Nhì" },
+    { id: "third", name: "Giải Ba" },
+  ];
 
   const [ideas, setIdeas] = useState([]);
-  const [departments, setDepartments] = useState([]);
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState(null);
+  const [years, setYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState(initialYear);
+  const [selectedAward, setSelectedAward] = useState(initialAward);
   const [currentPage, setCurrentPage] = useState(1);
   const [filterOpen, setFilterOpen] = useState(false);
   const itemsPerPage = 6;
 
+  // Lọc ý tưởng theo năm, giải thưởng và tìm kiếm
   const filteredIdeas = ideas.filter((idea) => {
-    const matchesDepartment =
-      selectedDepartmentId === null ||
-      idea.department?.id === selectedDepartmentId;
+    const matchesAward =
+      selectedAward === "all" ||
+      (selectedAward === null
+        ? idea.award === null || idea.award === undefined || idea.award === ""
+        : idea.award === selectedAward);
     const matchesSearch =
       searchQuery === "" ||
-      idea.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesDepartment && matchesSearch;
+      (idea.topic_name &&
+        idea.topic_name.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesAward && matchesSearch;
   });
 
   const totalPages = Math.ceil(filteredIdeas.length / itemsPerPage);
@@ -38,42 +51,66 @@ const ListIdeaScreen = () => {
     currentPage * itemsPerPage
   );
 
+  // Gọi API để lấy danh sách ý tưởng theo năm
   useEffect(() => {
     const fetchIdeasList = async () => {
       try {
-        const response = await AuthApi.topics();
-        console.log("Danh sách ý tưởng từ API:", response?.data?.result);
-        setIdeas(response.data.result || response.data || []);
+        let response;
+        if (selectedYear === "Tất cả") {
+          response = await AuthApi.allTopicDone();
+        } else {
+          response = await AuthApi.filterYearTopic({ year: selectedYear });
+        }
+        console.log("Danh sách ý tưởng từ API:", response?.data);
+        const ideasData = response.data.result || response.data || [];
+        setIdeas(ideasData);
+
+        // Lấy danh sách năm duy nhất
+        const uniqueYears = [
+          "Tất cả",
+          ...new Set(
+            (await AuthApi.allTopicDone()).data.map(
+              (idea) => idea.submission_year
+            )
+          ),
+        ].sort((a, b) => {
+          if (a === "Tất cả") return -1;
+          if (b === "Tất cả") return 1;
+          if (a === 2025) return -1;
+          if (b === 2025) return 1;
+          return b - a;
+        });
+        setYears(uniqueYears);
       } catch (error) {
         console.error("Lỗi khi lấy danh sách ý tưởng:", error);
       }
     };
 
-    const fetchDepartments = async () => {
-      try {
-        const response = await AuthApi.departments();
-        console.log("Danh sách departments từ API:", response?.data?.result);
-        const departmentsData = response.data.result || response.data || [];
-        setDepartments([{ id: null, name: "Tất cả" }, ...departmentsData]);
-      } catch (error) {
-        console.error("Lỗi khi lấy danh sách departments:", error);
-      }
-    };
-
     fetchIdeasList();
-    fetchDepartments();
-  }, []);
+  }, [selectedYear]);
 
+  // Cập nhật năm và giải thưởng từ URL
   useEffect(() => {
-    if (initialCategory === "Tất cả") {
-      setSelectedDepartmentId(null);
-    } else {
-      const selectedDept = departments.find(
-        (dept) => dept.name === initialCategory
-      );
-      setSelectedDepartmentId(selectedDept ? selectedDept.id : null);
+    setSelectedYear(initialYear);
+    setSelectedAward(initialAward);
+  }, [initialYear, initialAward]);
+
+  // Hiển thị tên giải thưởng
+  const displayAward = (award) => {
+    let color = "text-gray-700 font-semibold";
+    let label = "Không có giải thưởng";
+    if (award === "first") {
+      label = "Giải Nhất";
+      color = "text-yellow-700 font-semibold";
+    } else if (award === "second") {
+      label = "Giải Nhì";
+      color = "text-green-700 font-semibold";
+    } else if (award === "third") {
+      label = "Giải Ba";
+      color = "text-blue-700 font-semibold";
     }
-  }, [initialCategory, departments]);
+    return <span className={color}>{label}</span>;
+  };
 
   return (
     <div className="px-20 pt-30 py-6">
@@ -89,29 +126,64 @@ const ListIdeaScreen = () => {
       </div>
       {filterOpen && (
         <div className="bg-gray-100 p-4 rounded-lg mb-4">
-          <h3 className="text-lg font-semibold mb-2">Chọn chuyên ngành</h3>
-          <div className="flex space-x-4 overflow-x-auto">
-            {departments.length > 0 ? (
-              departments.map((department) => (
+          <h3 className="text-lg font-semibold mb-2">
+            Lọc theo năm và giải thưởng
+          </h3>
+          <div className="mb-4">
+            <h4 className="text-md font-medium mb-2">Năm</h4>
+            <div className="flex space-x-4 overflow-x-auto">
+              {years.length > 0 ? (
+                years.map((year) => (
+                  <button
+                    key={year}
+                    className={`px-4 py-2 rounded-lg whitespace-nowrap cursor-pointer ${
+                      selectedYear === year
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-300"
+                    }`}
+                    onClick={() => {
+                      setSelectedYear(year);
+                      setCurrentPage(1);
+                      navigate(
+                        `/list-idea?year=${encodeURIComponent(
+                          year
+                        )}&award=${encodeURIComponent(selectedAward)}`
+                      );
+                    }}
+                  >
+                    {year}
+                  </button>
+                ))
+              ) : (
+                <p>Đang tải danh sách năm...</p>
+              )}
+            </div>
+          </div>
+          <div>
+            <h4 className="text-md font-medium mb-2">Giải thưởng</h4>
+            <div className="flex space-x-4 overflow-x-auto">
+              {awards.map((award) => (
                 <button
-                  key={department.id ?? "all"}
+                  key={award.id ?? "none"}
                   className={`px-4 py-2 rounded-lg whitespace-nowrap cursor-pointer ${
-                    selectedDepartmentId === department.id
+                    selectedAward === award.id
                       ? "bg-blue-500 text-white"
                       : "bg-gray-300"
                   }`}
                   onClick={() => {
-                    setSelectedDepartmentId(department.id);
+                    setSelectedAward(award.id);
                     setCurrentPage(1);
-                    setFilterOpen(true);
+                    navigate(
+                      `/list-idea?year=${encodeURIComponent(
+                        selectedYear
+                      )}&award=${encodeURIComponent(award.id)}`
+                    );
                   }}
                 >
-                  {department.name}
+                  {award.name}
                 </button>
-              ))
-            ) : (
-              <p>Đang tải danh sách chuyên ngành...</p>
-            )}
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -122,30 +194,47 @@ const ListIdeaScreen = () => {
           paginatedIdeas.map((idea) => (
             <button
               onClick={() => {
-                navigate("/newspaper");
+                navigate(`/newspaper/${idea.id}`);
                 window.scrollTo(0, 0);
               }}
               key={idea.id}
               className="bg-white p-4 shadow-lg rounded-lg hover:-translate-y-2 transition-transform duration-300 ease-in-out cursor-pointer"
             >
               <img
-                src={newspaper_image}
-                alt={idea.name}
+                src={idea.topic_image || newspaper_image}
+                alt={idea.topic_name}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = newspaper_image;
+                }}
                 className="w-full max-h-80 object-cover rounded"
               />
               <a
                 onClick={() => {
-                  navigate("/newspaper");
+                  navigate(`/newspaper/${idea.id}`);
                   window.scrollTo(0, 0);
                 }}
-                className="text-xl font-semibold text-left hover:text-blue-600 cursor-pointer flex items-start mt-4"
+                className="text-xl font-semibold text-left hover:text-blue-600 cursor-pointer flex items-start mt-4 truncate max-w-full line-clamp-1"
+                title={idea.topic_name} // Hiển thị toàn bộ nội dung khi hover
               >
-                {idea.name}
+                {idea.topic_name}
               </a>
-              <p className="text-gray-600 mt-1 text-left">{idea.description}</p>
-              <p className="text-sm text-gray-500 mt-2 text-left">
-                Trường: {idea.university?.name}
+              <p className="text-gray-600 mt-1 text-left line-clamp-3">
+                {idea.description}
               </p>
+              <p className="text-sm text-gray-500 mt-2 text-left">
+                GVHD: {idea.guidance_teacher}
+              </p>
+              <p className="text-sm text-gray-500 mt-2 text-left">
+                Năm: {idea.submission_year}
+              </p>
+              {idea.award ? (
+                <p className="text-sm text-gray-500 mt-2 text-left">
+                  Đạt giải: {displayAward(idea.award)}
+                </p>
+              ) : (
+                <span></span>
+              )}
             </button>
           ))
         ) : (

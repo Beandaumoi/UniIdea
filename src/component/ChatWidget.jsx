@@ -8,14 +8,20 @@ export default function ChatWidget() {
     { sender: "bot", text: "Xin chào! Tôi có thể giúp gì cho bạn?" },
   ]);
   const quickReplies = [
-    { question: "Bạn tên là gì?", answer: "Tôi là UniIdea Chatbot." },
+    {
+      question: "Bạn tên là gì?",
+      answer:
+        "Tôi là UniIdea Chatbot. Hệ thống quản lý ý tưởng sáng tạo và khởi nghiệp dành cho sinh viên trong môi trường đại học. Hệ thống được xây dựng với mục tiêu tạo ra một nền tảng hiện đại, thuận tiện và hiệu quả, giúp sinh viên có thể dễ dàng đăng ký và trình bày ý tưởng sáng tạo",
+    },
     {
       question: "Hướng dẫn sử dụng",
-      answer: "Bạn có thể nhấn vào các câu hỏi để nhận câu trả lời tự động.",
+      answer:
+        "Sinh viên có thể dễ dàng lướt qua trang chủ (Home) để xem tổng quan về hệ thống cũng như các thông tin cơ bản liên quan đến hoạt động sáng tạo và khởi nghiệp. Nếu muốn đăng ký đề tài hoặc ý tưởng, sinh viên cần phải có tài khoản đăng nhập trên hệ thống. Trong trường hợp chưa có tài khoản, sinh viên cần thực hiện đăng ký trước. Sau khi hoàn tất việc đăng nhập và điền thông tin ý tưởng, hệ thống sẽ tiến hành gửi ý tưởng lên để chờ xét duyệt từ phía nhà trường hoặc ban tổ chức chương trình.",
     },
     {
       question: "Liên hệ hỗ trợ",
-      answer: "Bạn có thể liên hệ qua email support@uniidea.com",
+      answer:
+        "Bạn có thể liên hệ bằng cách ấn Liên hệ trên thanh công cụ. Nhập đầy đủ thông tin cần thiết, thông tin sẽ tự động được gửi về cho quản trị viên",
     },
   ];
 

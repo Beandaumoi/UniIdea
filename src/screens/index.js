@@ -7,7 +7,8 @@ import NewspaperScreen from "./news_screen";
 import ListIdeaScreen from "./list_idea_screen";
 import UserProfileScreen from "./user_profile";
 import ChangePasswordScreen from "./auth/change_password_screen";
-
+import RuleScreen from "./rules/rule_screen";
+import ProjectManager from "./admin/ProjectManager";
 export {
   HomeScreens,
   LoginScreen,
@@ -18,4 +19,6 @@ export {
   ListIdeaScreen,
   UserProfileScreen,
   ChangePasswordScreen,
+  RuleScreen,
+  ProjectManager,
 };

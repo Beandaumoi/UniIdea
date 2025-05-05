@@ -1,89 +1,223 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { newspaper_image, eg_news_image } from "../assets/images";
+import AuthApi from "../network/AuthApi";
+import { IoArrowBackOutline, IoArrowDownCircleOutline } from "react-icons/io5";
 
 export default function NewspaperScreen() {
-  const [comments, setComments] = useState([
-    {
-      id: 1,
-      name: "Nguyễn Văn A",
-      avatar: "https://i.pravatar.cc/50?img=3",
-      text: "Bài viết rất hữu ích!",
-    },
-    {
-      id: 2,
-      name: "Trần Thị B",
-      avatar: "https://i.pravatar.cc/50?img=5",
-      text: "Mình rất quan tâm đến chủ đề này!",
-    },
-  ]);
+  // const [comments, setComments] = useState([
+  //   {
+  //     id: 1,
+  //     name: "Nguyễn Văn A",
+  //     avatar: "https://i.pravatar.cc/50?img=3",
+  //     text: "Bài viết rất hữu ích!",
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "Trần Thị B",
+  //     avatar: "https://i.pravatar.cc/50?img=5",
+  //     text: "Mình rất quan tâm đến chủ đề này!",
+  //   },
+  // ]);
 
-  const teacherReviews = [
-    {
-      id: 1,
-      name: "PGS. TS. Nguyễn Văn C",
-      stars: 5,
-      comment: "Bài viết rất hay, thông tin hữu ích!",
-      avatar: "https://i.pravatar.cc/80?img=10",
-    },
-    {
-      id: 2,
-      name: "TS. Trần Thị D",
-      stars: 4,
-      comment: "Nội dung tốt nhưng cần bổ sung thêm dẫn chứng thực tế.",
-      avatar: "https://i.pravatar.cc/80?img=12",
-    },
-    {
-      id: 3,
-      name: "GS. TS. Lê Hoàng E",
-      stars: 5,
-      comment: "Rất ấn tượng với cách trình bày bài viết!",
-      avatar: "https://i.pravatar.cc/80?img=15",
-    },
-    {
-      id: 4,
-      name: "TS. Nguyễn Hữu F",
-      stars: 3,
-      comment: "Bài viết ổn nhưng có thể cải thiện về số liệu.",
-      avatar: "https://i.pravatar.cc/80?img=18",
-    },
-  ];
-  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
+  // const teacherReviews = [
+  //   {
+  //     id: 1,
+  //     name: "PGS. TS. Nguyễn Văn C",
+  //     stars: 5,
+  //     comment: "Bài viết rất hay, thông tin hữu ích!",
+  //     avatar: "https://i.pravatar.cc/80?img=10",
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "TS. Trần Thị D",
+  //     stars: 4,
+  //     comment: "Nội dung tốt nhưng cần bổ sung thêm dẫn chứng thực tế.",
+  //     avatar: "https://i.pravatar.cc/80?img=12",
+  //   },
+  //   {
+  //     id: 3,
+  //     name: "GS. TS. Lê Hoàng E",
+  //     stars: 5,
+  //     comment: "Rất ấn tượng với cách trình bày bài viết!",
+  //     avatar: "https://i.pravatar.cc/80?img=15",
+  //   },
+  //   {
+  //     id: 4,
+  //     name: "TS. Nguyễn Hữu F",
+  //     stars: 3,
+  //     comment: "Bài viết ổn nhưng có thể cải thiện về số liệu.",
+  //     avatar: "https://i.pravatar.cc/80?img=18",
+  //   },
+  // ];
+  // const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
+
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     setCurrentReviewIndex(
+  //       (prevIndex) => (prevIndex + 1) % teacherReviews.length
+  //     );
+  //   }, 5000);
+  //   return () => clearInterval(interval);
+  // }, []);
+
+  // const [newComment, setNewComment] = useState("");
+
+  // const addComment = () => {
+  //   if (newComment.trim() === "") return;
+  //   const newEntry = {
+  //     id: Date.now(),
+  //     name: "Bạn",
+  //     avatar: "https://i.pravatar.cc/50?img=8",
+  //     text: newComment,
+  //   };
+  //   setComments([newEntry, ...comments]);
+  //   setNewComment("");
+  // };
+
+  // const deleteComment = (id) => {
+  //   setComments(comments.filter((comment) => comment.id !== id));
+  // };
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const [topic, setTopic] = useState(null);
+  const [universities, setUniversities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentReviewIndex(
-        (prevIndex) => (prevIndex + 1) % teacherReviews.length
-      );
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    const fetchData = async () => {
+      try {
+        // Lấy chi tiết topic
+        const topicResponse = await AuthApi.getTopicDetail(id);
+        setTopic(topicResponse.data || {});
 
-  const [newComment, setNewComment] = useState("");
+        // Lấy danh sách trường và khoa
+        const universitiesResponse = await AuthApi.pickUniversity();
+        setUniversities(universitiesResponse.data || []);
 
-  const addComment = () => {
-    if (newComment.trim() === "") return;
-    const newEntry = {
-      id: Date.now(),
-      name: "Bạn",
-      avatar: "https://i.pravatar.cc/50?img=8",
-      text: newComment,
+        setLoading(false);
+      } catch (err) {
+        console.error("Lỗi khi lấy dữ liệu:", err);
+        setError("Không thể tải dữ liệu.");
+        setLoading(false);
+      }
     };
-    setComments([newEntry, ...comments]);
-    setNewComment("");
+
+    fetchData();
+  }, [id]);
+
+  // Tạo bản đồ tra cứu cho trường và khoa
+  const universityMap = useMemo(() => {
+    const map = {};
+    universities.forEach((uni) => {
+      map[uni.id] = uni.name;
+    });
+    return map;
+  }, [universities]);
+
+  const facultyMap = useMemo(() => {
+    const map = {};
+    universities.forEach((uni) => {
+      uni.faculties.forEach((faculty) => {
+        map[faculty.id] = faculty.name;
+      });
+    });
+    return map;
+  }, [universities]);
+
+  // Hiển thị tên giải thưởng
+  const displayAward = (award) => {
+    let color = "text-gray-700 font-semibold";
+    let label = "Không có giải thưởng";
+    if (award === "first") {
+      label = "Giải Nhất";
+      color = "text-yellow-700 font-semibold";
+    } else if (award === "second") {
+      label = "Giải Nhì";
+      color = "text-green-700 font-semibold";
+    } else if (award === "third") {
+      label = "Giải Ba";
+      color = "text-blue-700 font-semibold";
+    }
+    return <span className={color}>{label}</span>;
   };
 
-  const deleteComment = (id) => {
-    setComments(comments.filter((comment) => comment.id !== id));
-  };
+  if (loading) {
+    return <div className="text-center py-10">Đang tải...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-10 text-red-500">{error}</div>;
+  }
+
+  if (!topic) {
+    return <div className="text-center py-10">Không tìm thấy topic.</div>;
+  }
 
   return (
     <div className="max-w-3xl mx-auto pt-20 bg-white mt-10 mb-10 p-6 text-justify">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center text-blue-500 hover:text-blue-700 mb-6 text-xl cursor-pointer"
+      >
+        <IoArrowBackOutline size={20} className="mr-2" />
+        Quay lại
+      </button>
       <h1 className="text-3xl font-bold text-gray-900 leading-tight">
-        Đại học Bách khoa Hà Nội: Ứng dụng nông nghiệp thông minh
+        {topic?.topic_name?.toUpperCase()}
       </h1>
-      <p className="text-gray-500 text-sm mt-2">26/09/2024 - 07:58</p>
+      <p className="text-gray-500 text-lg mt-2">Năm: {topic.submission_year}</p>
+      <p className="text-gray-500 text-lg mt-2">
+        Giáo viên hướng dẫn: {topic.guidance_teacher}
+      </p>
+      <p className="text-gray-500 text-lg mt-2">
+        Email trưởng nhóm: {topic.leader_email}
+      </p>
+      <p className="text-gray-500 text-lg mt-2">Mô tả: {topic.description}</p>
+      <p className="text-gray-500 text-lg mt-2">
+        Thành viên: {topic.members?.length || 0}
+      </p>
 
-      <p className="text-gray-800 mt-4 leading-relaxed">
+      <div className="overflow-x-auto mt-6 rounded-md shadow-md border border-gray-200">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-blue-100 text-blue-800 uppercase text-xs font-semibold">
+              <th className="p-3 w-2/12 text-center text-lg">Tên</th>
+              <th className="p-3 w-2/12 text-center text-lg">MSSV</th>
+              <th className="p-3 w-2/12 text-center text-lg">Trường</th>
+              <th className="p-3 w-2/12 text-center text-lg">Khoa</th>
+              <th className="p-3 w-2/12 text-center text-lg">SĐT</th>
+            </tr>
+          </thead>
+          <tbody>
+            {topic?.members?.map((member, index) => (
+              <tr
+                key={index}
+                className="odd:bg-white even:bg-gray-50 border-t border-gray-200"
+              >
+                <td className="p-3 text-center text-lg">
+                  {member.name || "Không rõ"}
+                </td>
+                <td className="p-3 text-center text-lg">
+                  {member.student_id || "Không rõ"}
+                </td>
+                <td className="p-3 text-center text-lg">
+                  {universityMap[member.university_id] || "Không rõ"}
+                </td>
+                <td className="p-3 text-center text-lg">
+                  {facultyMap[member.faculty_id] || "Không rõ"}
+                </td>
+                <td className="p-3 text-center text-lg">
+                  {member.phone || "Không rõ"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="text-gray-800 mt-8 leading-relaxed">
         Trong những năm gần đây, nhằm định hướng phát triển trở thành đại học
         nghiên cứu đa ngành, đa lĩnh vực, Đại học Bách khoa Hà Nội đã không
         ngừng triển khai nhiều chủ trương và giải pháp đổi mới trong lĩnh vực
@@ -98,7 +232,11 @@ export default function NewspaperScreen() {
 
       <div className="mt-6">
         <img
-          src={newspaper_image}
+          src={newspaper_image || topic.topic_image}
+          onError={(e) => {
+            e.target.onerror = null; // Ngăn lặp vô hạn nếu ảnh fallback cũng lỗi
+            e.target.src = newspaper_image;
+          }}
           alt="Giới thiệu sản phẩm nghiên cứu khoa học"
           className="w-full rounded-lg shadow-md"
         />
@@ -154,7 +292,11 @@ export default function NewspaperScreen() {
       </p>
       <div className="mt-6">
         <img
-          src={eg_news_image}
+          src={eg_news_image || topic.topic_image}
+          onError={(e) => {
+            e.target.onerror = null; // Ngăn lặp vô hạn nếu ảnh fallback cũng lỗi
+            e.target.src = newspaper_image;
+          }}
           alt="Giới thiệu sản phẩm áp dụng nông nghiệp"
           className="w-full rounded-lg shadow-md"
         />
@@ -214,7 +356,46 @@ export default function NewspaperScreen() {
         trưởng Huỳnh Đăng Chính nhấn mạnh.
       </p>
 
-      {/* Phần Đánh Giá của Giáo Viên */}
+      {topic.award ? (
+        <p className="text-gray-500 text-lg mt-6">
+          Đạt giải: {displayAward(topic.award)}
+        </p>
+      ) : (
+        <span></span>
+      )}
+
+      <div>
+        <h3 className="flex items-center text-2xl font-semibold text-gray-900 my-6">
+          Để xem chi tiết hơn về ý tưởng hãy xem qua file của nhóm{" "}
+          <span className="ml-4">
+            <IoArrowDownCircleOutline />{" "}
+          </span>
+        </h3>
+        <a
+          href={`http://127.0.0.1:8000/${topic?.report_file}`}
+          download
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mb-2 text-blue-700 hover:text-orange-500 w-fit cursor-pointer text-lg"
+        >
+          File báo cáo của nhóm
+        </a>
+        <br></br>
+        {topic?.topic_image ? (
+          <a
+            href={`http://127.0.0.1:8000/${topic?.topic_image}`}
+            download
+            target="_blank"
+            className="mb-2 text-blue-700 hover:text-orange-500 w-fit cursor-pointer text-lg"
+          >
+            Ảnh báo cáo của nhóm
+          </a>
+        ) : (
+          <span></span>
+        )}
+      </div>
+
+      {/* Phần Đánh Giá của Giáo Viên
       <div className="mt-6 pt-4">
         <h2 className="text-xl font-semibold text-yellow-600 mb-2">
           Đánh giá của giáo viên
@@ -248,8 +429,8 @@ export default function NewspaperScreen() {
         </div>
       </div>
 
-      {/* Phần Bình Luận */}
-      <div className="mt-6 pt-4">
+      {/* Phần Bình Luận 
+        <div className="mt-6 pt-4">
         <h2 className="text-xl font-semibold text-blue-600 mb-2">Bình luận</h2>
         <div className="flex items-center space-x-3">
           <img
@@ -281,7 +462,7 @@ export default function NewspaperScreen() {
             />
             <div className="flex-1 ml-4">
               <p className="font-semibold text-gray-800">{comment.name}</p>
-              <p className="text-gray-700">{comment.text}</p>
+              <p c  lassName="text-gray-700">{comment.text}</p>
             </div>
             {comment.name === "Bạn" && (
               <button
@@ -293,7 +474,7 @@ export default function NewspaperScreen() {
             )}
           </div>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 }

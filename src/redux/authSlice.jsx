@@ -9,16 +9,21 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setToken: (state, action) => {
-      state.accessToken = action.payload.token; // Lấy token từ payload
-      state.user = action.payload.user; // Lấy user từ payload
+    setUserToken: (state, action) => {
+      state.accessToken = action.payload.token;
+      state.user = action.payload.user;
     },
-    clearToken: (state) => {
+    clearUserToken: (state) => {
       state.accessToken = null;
       state.user = null; // Xóa cả token và user khi clear
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("user");
+    },
+    updateUser: (state, action) => {
+      state.user = action.payload;
     },
   },
 });
 
-export const { setToken, clearToken } = authSlice.actions;
+export const { setUserToken, clearUserToken, updateUser } = authSlice.actions;
 export default authSlice.reducer;

@@ -1,6 +1,6 @@
-import { useState } from "react"; // Xóa useEffect vì không cần nữa
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux"; // Thêm Redux hooks
+import { useSelector, useDispatch } from "react-redux";
 import { FaUserCircle } from "react-icons/fa";
 import { Link } from "react-scroll";
 import {
@@ -8,41 +8,50 @@ import {
   IoPersonCircleSharp,
   IoLockClosed,
   IoLogOut,
+  IoSettingsSharp,
 } from "react-icons/io5";
-import { clearToken } from "../redux/authSlice"; // Import action clearToken
+import { clearUserToken } from "../redux/authSlice";
+import { none_user } from "../assets/images";
 
 function Navbar() {
-  const categories = [
-    "Công nghệ thông tin",
-    "Kỹ thuật ô tô",
-    "Khoa học máy tính",
-    "Dệt may",
-    "Cơ khí chế tạo",
-    "Công nghệ sinh học",
-  ];
-
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { accessToken, user } = useSelector((state) => state.auth); // Lấy token và user từ Redux
+  const { accessToken, user } = useSelector((state) => state.auth);
   const [showLibraryDropdown, setShowLibraryDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [years] = useState([2025]); // Dữ liệu cứng chỉ chứa 2025
   let libraryTimeoutId = null;
   let userTimeoutId = null;
-
-  // Kiểm tra trạng thái đăng nhập dựa trên token
+  const BASE_URL = "http://127.0.0.1:8000";
   const isLoggedIn = !!accessToken;
-  const avatar = user?.avatar || "https://i.pravatar.cc/40"; // Lấy avatar từ user, fallback nếu không có
+  const avatar = user?.avatar ? `${BASE_URL}/${user.avatar}` : none_user;
 
-  const handleLogout = () => {
-    dispatch(clearToken()); // Xóa token và user khỏi Redux
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
-    navigate("/");
+  const awards = [
+    { id: "first", name: "Giải Nhất" },
+    { id: "second", name: "Giải Nhì" },
+    { id: "third", name: "Giải Ba" },
+  ];
+
+  const handleFilterClick = (filterType, value) => {
+    const params = new URLSearchParams();
+    if (filterType === "all") {
+      params.set("year", "Tất cả");
+      params.set("award", "all");
+    } else if (filterType === "year") {
+      params.set("year", value);
+    } else if (filterType === "award") {
+      params.set("award", value);
+      // params.set("award", value === "none" ? "none" : value);
+    }
+    navigate(`/list-idea?${params.toString()}`);
+    window.scrollTo(0, 0);
   };
 
-  const handleCategoryClick = (category) => {
-    navigate(`/list-idea?category=${encodeURIComponent(category)}`);
-    window.scrollTo(0, 0);
+  const handleLogout = () => {
+    dispatch(clearUserToken());
+    localStorage.removeItem("accessToken Xue");
+    localStorage.removeItem("user");
+    navigate("/");
   };
 
   return (
@@ -75,7 +84,7 @@ function Navbar() {
               <button
                 className="cursor-pointer"
                 onClick={() => {
-                  navigate("/idea-register");
+                  navigate("/regulation");
                   window.scrollTo(0, 0);
                 }}
               >
@@ -110,32 +119,49 @@ function Navbar() {
             Thư viện
             {showLibraryDropdown && (
               <div className="absolute -left-10 top-full mt-6 w-150 bg-white shadow-lg border rounded-lg p-2">
-                <div className="grid grid-cols-2 gap-4 z-30">
-                  {/* Cột 1 */}
+                <div className="grid grid-cols-3 gap-4 z-30">
                   <div>
                     <span className="block px-4 py-2 text-gray-700 font-semibold">
                       Danh mục
                     </span>
                     <a
-                      onClick={() => handleCategoryClick("Tất cả")}
+                      onClick={() => handleFilterClick("all", "Tất cả")}
                       className="block px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
                     >
                       Tất cả
                     </a>
                   </div>
-
-                  {/* Cột 2 - Thêm nhiều mục hơn */}
                   <div>
                     <span className="block px-4 py-2 text-gray-700 font-semibold">
-                      Chuyên ngành
+                      Năm
                     </span>
-                    {categories.map((category) => (
+                    {years.length > 0 ? (
+                      years.map((year) => (
+                        <a
+                          key={year}
+                          onClick={() => handleFilterClick("year", year)}
+                          className="block px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
+                        >
+                          {year}
+                        </a>
+                      ))
+                    ) : (
+                      <p className="px-4 py-2 text-gray-400">
+                        Không có dữ liệu
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <span className="block px-4 py-2 text-gray-700 font-semibold mt-2">
+                      Giải thưởng
+                    </span>
+                    {awards.map((award) => (
                       <a
-                        key={category}
-                        onClick={() => handleCategoryClick(category)}
+                        key={award.id ?? "none"}
+                        onClick={() => handleFilterClick("award", award.id)}
                         className="block px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
                       >
-                        {category}
+                        {award.name}
                       </a>
                     ))}
                   </div>
@@ -151,7 +177,7 @@ function Navbar() {
           </li>
         </ul>
 
-        {/* Kiểm tra trạng thái đăng nhập */}
+        {/* User Section */}
         <div className="mr-48 flex items-center space-x-4">
           {isLoggedIn ? (
             <div
@@ -199,6 +225,16 @@ function Navbar() {
                     <IoLockClosed className="mr-4" />
                     Đổi mật khẩu
                   </a>
+                  {user?.role === "admin" && (
+                    <a
+                      href="#"
+                      onClick={() => navigate("/admin")}
+                      className="flex items-center justify-start w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+                    >
+                      <IoSettingsSharp className="mr-4" />
+                      Quản trị
+                    </a>
+                  )}
                   <a
                     href="#"
                     onClick={handleLogout}
@@ -211,7 +247,6 @@ function Navbar() {
               )}
             </div>
           ) : (
-            // Nút đăng nhập nếu chưa đăng nhập
             <button
               onClick={() => navigate("/login")}
               className="bg-blue-600 text-white px-4 py-2 rounded-md flex items-center space-x-2 cursor-pointer hover:bg-blue-700"

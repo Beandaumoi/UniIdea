@@ -6,6 +6,7 @@ import {
   bg_contact,
   newspaper_image,
 } from "../assets/images";
+import { video } from "../assets/videos/index";
 import {
   IoFlameSharp,
   IoLockClosed,
@@ -13,10 +14,11 @@ import {
   IoPaperPlaneSharp,
   IoCheckmarkDoneSharp,
   IoNotifications,
-  IoChevronBack,
-  IoChevronForward,
   IoArrowRedoCircleOutline,
 } from "react-icons/io5";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import { ChatWidget, ScrollToTop, SearchBar } from "../component";
 import AuthApi from "../network/AuthApi";
 
@@ -54,40 +56,60 @@ function HomeScreens() {
 
   const navigate = useNavigate();
   const [ideas, setIdeas] = useState([]);
-  const [startIndex, setStartIndex] = useState(0);
-  const itemsPerPage = 3;
 
-  // Chuyển sang phần tử tiếp theo
-  const nextSlide = () => {
-    setStartIndex((prevIndex) =>
-      prevIndex + 1 < ideas.length - itemsPerPage + 1 ? prevIndex + 1 : 0
-    );
-  };
+  const [message, setMessage] = useState("");
 
-  // Quay lại phần tử trước đó
-  const prevSlide = () => {
-    setStartIndex((prevIndex) =>
-      prevIndex - 1 >= 0
-        ? prevIndex - 1
-        : Math.max(0, ideas.length - itemsPerPage)
-    );
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    const params = {
+      content: message,
+    };
+
+    try {
+      const response = await AuthApi.sendFeedback(params);
+      if (response.status === 201 || response.status === 200) {
+        console.log("Gửi thành công", response.data);
+        toast.success("Gửi góp ý thành công!");
+        setMessage(""); // Xóa nội dung sau khi gửi thành công
+      } else {
+        toast.error("Lỗi khi gửi!");
+        console.log("Gửi thất bại:", response);
+      }
+    } catch (error) {
+      console.error("Lỗi khi gửi:", error);
+    }
   };
 
   // Gọi API để lấy dữ liệu
   useEffect(() => {
     const fetchTopics = async () => {
       try {
-        const response = await AuthApi.topics();
-        console.log("Dữ liệu từ AuthApi.topics:", response.data.result);
-        const fetchedIdeas = response.data.result || response.data || [];
+        const response = await AuthApi.allTopicDone();
+        console.log("Dữ liệu từ AuthApi.topics:", response?.data);
+        const fetchedIdeas = response?.data || [];
 
-        const mappedIdeas = fetchedIdeas.map((idea, index) => ({
-          name: idea.name || "Ý tưởng không tên",
+        const filteredIdeas = fetchedIdeas?.filter(
+          (idea) =>
+            idea.submission_year === 2025 &&
+            ["first", "second", "third"].includes(idea.award)
+        );
+        console.log("filteredIdeas: ", filteredIdeas);
+
+        const awardPriority = {
+          first: 1,
+          second: 2,
+          third: 3,
+          null: 4,
+          undefined: 4,
+        };
+
+        const mappedIdeas = filteredIdeas.map((idea, index) => ({
+          id: idea.id || idea._id || "",
+          name: idea.topic_name || "Ý tưởng không tên",
           description: idea.description || "Chưa có mô tả",
           image: idea.image || newspaper_image,
-          rating: idea.rating || 4.5,
-          university:
-            idea.university?.name || idea.university || "Chưa xác định",
+          teacher: idea.guidance_teacher || "Chưa xác định",
+          award: idea.award,
           border: `border-${
             ["green", "blue", "yellow", "red", "purple", "pink"][index % 6]
           }-400`,
@@ -97,7 +119,11 @@ function HomeScreens() {
           text: "text-black",
         }));
 
-        setIdeas(mappedIdeas);
+        const sortedIdeas = [...mappedIdeas].sort((a, b) => {
+          return (awardPriority[a.award] ?? 4) - (awardPriority[b.award] ?? 4);
+        });
+
+        setIdeas(sortedIdeas);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu từ API:", error);
         setIdeas([]);
@@ -105,21 +131,28 @@ function HomeScreens() {
     };
 
     fetchTopics();
-  }, []); // Chỉ gọi API một lần khi component mount
+  }, []);
 
-  // Tự động chuyển slide
-  useEffect(() => {
-    if (ideas.length > itemsPerPage) {
-      const interval = setInterval(() => {
-        nextSlide();
-      }, 3000);
-
-      return () => clearInterval(interval);
+  // Hiển thị tên giải thưởng
+  const displayAward = (award) => {
+    let color = "text-gray-700 font-semibold";
+    let label = "Không có giải thưởng";
+    if (award === "first") {
+      label = "Giải Nhất";
+      color = "text-yellow-700 font-semibold";
+    } else if (award === "second") {
+      label = "Giải Nhì";
+      color = "text-green-700 font-semibold";
+    } else if (award === "third") {
+      label = "Giải Ba";
+      color = "text-blue-700 font-semibold";
     }
-  }, [ideas, startIndex]);
+    return <span className={color}>{label}</span>;
+  };
 
   return (
     <div className="bg-gray-200">
+      <ToastContainer />
       <div
         className="relative w-full h-[80vh] bg-cover bg-center"
         style={{ backgroundImage: `url(${backgroundMain})` }}
@@ -308,12 +341,12 @@ function HomeScreens() {
             </div>
           </div>
           <div className="ml-10">
-            <iframe
+            <video
               className="w-full h-60 md:h-80 rounded-lg shadow-lg"
-              src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-              title="Thinking School Video"
-              allowFullScreen
-            ></iframe>
+              src={video}
+              controls
+              playsInline
+            />
           </div>
         </div>
       </div>
@@ -325,22 +358,8 @@ function HomeScreens() {
           </h2>
 
           <div className="relative flex items-center">
-            <button
-              onClick={prevSlide}
-              className="absolute -left-16 z-10 bg-transparent hover:bg-amber-200 hover:text-amber-700 text-gray-800 p-2 rounded-full shadow-md cursor-pointer"
-            >
-              <IoChevronBack size={24} />
-            </button>
-
             <div className="overflow-hidden w-full">
-              <div
-                className="flex transition-transform duration-300 ease-in-out"
-                style={{
-                  transform: `translateX(-${
-                    startIndex * (100 / itemsPerPage)
-                  }%)`,
-                }}
-              >
+              <div className="flex transition-transform duration-300 ease-in-out">
                 {ideas.length > 0 ? (
                   ideas.map((idea, index) => (
                     <div key={index} className="w-1/3 flex-shrink-0 px-2">
@@ -348,7 +367,7 @@ function HomeScreens() {
                         className={`border ${idea.border} rounded-lg overflow-hidden shadow-md`}
                       >
                         <div
-                          className={`${idea.bg} ${idea.text} p-6 text-lg font-bold text-blue-700 text-center`}
+                          className={`${idea.bg} ${idea.text} p-6 text-lg font-bold text-blue-700 text-center truncate`}
                         >
                           {idea.name}
                         </div>
@@ -363,7 +382,10 @@ function HomeScreens() {
                           </p>
 
                           <p className="mt-2 text-sm text-gray-500">
-                            🏫 {idea.university}
+                            GVHD: {idea.teacher}
+                          </p>
+                          <p className="mt-2 text-sm text-gray-500">
+                            Giải: {displayAward(idea.award)}
                           </p>
                         </div>
                         <div
@@ -372,8 +394,13 @@ function HomeScreens() {
                           <span
                             className="hover:text-orange-500 hover:-translate-y-1 transition-transform duration-300 ease-in-out flex items-center cursor-pointer"
                             onClick={() => {
-                              navigate("/newspaper");
-                              window.scrollTo(0, 0);
+                              if (idea.id) {
+                                console.log("Navigating to idea ID:", idea.id);
+                                navigate(`/newspaper/${idea.id}`);
+                                window.scrollTo(0, 0);
+                              } else {
+                                toast.error("Không thể xem chi tiết ý tưởng!");
+                              }
                             }}
                           >
                             Tiếp tục đọc
@@ -390,13 +417,6 @@ function HomeScreens() {
                 )}
               </div>
             </div>
-
-            <button
-              onClick={nextSlide}
-              className="absolute -right-16 z-10 bg-transparent hover:bg-amber-200 hover:text-amber-700 text-gray-800 p-2 rounded-full shadow-md cursor-pointer"
-            >
-              <IoChevronForward size={24} />
-            </button>
           </div>
         </div>
       </div>
@@ -416,51 +436,24 @@ function HomeScreens() {
                 Hãy để lại lời nhắn
               </h2>
               <p className="text-gray-500 mb-6">
-                Hãy điền thông tin và chúng tôi sẽ liên hệ bạn ngay
+                Hãy điền những ý kiến góp ý quý giá và chúng tôi sẽ liên hệ bạn
+                ngay
               </p>
               <form>
                 <div className="mb-5">
-                  <label className="block text-gray-700 text-lg">
-                    Họ và tên
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Nhập họ và tên"
-                  />
-                </div>
-                <div className="mb-5 flex space-x-6">
-                  <div className="w-1/2">
-                    <label className="block text-gray-700 text-lg">
-                      Số điện thoại
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Nhập số điện thoại"
-                    />
-                  </div>
-                  <div className="w-1/2">
-                    <label className="block text-gray-700 text-lg">Email</label>
-                    <input
-                      type="email"
-                      className="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Nhập email"
-                    />
-                  </div>
-                </div>
-                <div className="mb-5">
-                  <label className="block text-gray-700 text-lg">
+                  <label className="block text-gray-700 text-lg mb-6">
                     Nội dung
                   </label>
                   <textarea
                     className="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows="5"
+                    rows="10"
                     placeholder="Nhập nội dung"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
                   ></textarea>
                 </div>
                 <button
-                  type="submit"
+                  onClick={handleSendMessage}
                   className="w-full bg-blue-500 text-white p-4 rounded-lg text-lg hover:bg-blue-600 cursor-pointer"
                 >
                   Gửi

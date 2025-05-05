@@ -6,7 +6,6 @@ import ResponseCode from "./ResponseCode";
 import { Constants } from "../constants/Constants";
 import store from "../redux/store";
 
-// Định nghĩa các phương thức HTTP
 export const RequestMethod = {
   GET: "GET",
   POST: "POST",
@@ -14,20 +13,17 @@ export const RequestMethod = {
   DELETE: "DELETE",
 };
 
-// Cấu hình mặc định cho axios
 const axiosInstance = axios.create({
   baseURL: Constants.DOMAIN,
-  timeout: Constants.TIME_OUT || 30000, // 30 giây nếu TIME_OUT không được định nghĩa
+  timeout: Constants.TIME_OUT || 30000,
 });
 
-// API Client class
 class ApiClient {
   constructor(instance) {
     this.axios = instance;
-    this.mapRequestCancel = new Map(); // Lưu trữ các cancel token
+    this.mapRequestCancel = new Map();
   }
 
-  // Hủy request cũ nếu cần
   cancelRequest(url) {
     if (this.mapRequestCancel.has(url)) {
       const canceler = this.mapRequestCancel.get(url);
@@ -36,7 +32,6 @@ class ApiClient {
     }
   }
 
-  // Hàm chính để gửi request
   async request({
     method = RequestMethod.GET,
     url,
@@ -46,44 +41,65 @@ class ApiClient {
   }) {
     const urlRequest = ignoreURLBase ? url : `${Constants.DOMAIN}${url}`;
 
-    // Hủy request cũ nếu tồn tại
     this.cancelRequest(urlRequest);
 
     try {
       // Lấy token từ Redux store
-      const token = store.getState().auth.accessToken;
+      const { auth, admin } = store.getState();
+      const token = admin.adminToken || auth.accessToken;
       console.log("Token from Redux store:", token);
 
-      // Cấu hình request
+      // Fallback: Lấy token từ localStorage nếu Redux store không có
+      const localToken =
+        localStorage.getItem("adminToken") ||
+        localStorage.getItem("accessToken");
+      console.log("Token from localStorage:", localToken);
+
+      // Danh sách các endpoint công khai không cần token
+      const publicEndpoints = ["api/user/login", "/api/admin/login"];
+      const isPublicEndpoint = publicEndpoints.some((endpoint) =>
+        urlRequest.includes(endpoint)
+      );
+      const isFormData = params instanceof FormData;
+
       const config = {
         method,
         url: urlRequest,
+        // headers: {
+        //   "Content-Type": "application/json",
+        // },
         headers: {
-          Authorization: token ? `Bearer ${token}` : "",
+          ...(isFormData ? {} : { "Content-Type": "application/json" }),
         },
         cancelToken: new axios.CancelToken((cancel) => {
           this.mapRequestCancel.set(urlRequest, cancel);
         }),
       };
 
-      // Gán dữ liệu params theo phương thức
+      // Chỉ thêm Authorization header nếu không phải public endpoint và có token
+      if (!isPublicEndpoint && (token || localToken)) {
+        config.headers.Authorization = `Bearer ${token || localToken}`;
+      }
+
       if (method === RequestMethod.GET || method === RequestMethod.DELETE) {
         config.params = params;
       } else {
         config.data = params;
       }
 
-      console.log(`=======> REQUEST || ${urlRequest} : \n`, params);
+      console.log(`=======> REQUEST CONFIG || ${urlRequest} :`, {
+        method,
+        headers: config.headers,
+        data: params,
+      });
 
-      // Gửi request
       const response = await this.axios.request(config);
 
       console.log(`=======> RESPONSE || ${urlRequest} : \n`, response.data);
 
-      // Trả về dữ liệu thành công
       return {
         status: response.status,
-        data: response.data.data ?? response.data,
+        data: response.data.data ?? response.data, // Giữ nguyên response.data nếu không có data
       };
     } catch (error) {
       if (axios.isCancel(error)) {
@@ -100,11 +116,10 @@ class ApiClient {
 
       console.log(`=======> ERROR || ${urlRequest} : \n`, response);
 
-      // Xử lý lỗi chung nếu không bỏ qua
       if (!ignoreHandleCommonError) {
         switch (response.status) {
           case ResponseCode.UNAUTHORIZED:
-            response.message = ""; // Có thể dispatch action để logout ở đây
+            response.message = "Unauthorized access";
             break;
           case ResponseCode.GATEWAY_TIME_OUT:
             response.message = "Gateway timeout";
@@ -116,12 +131,10 @@ class ApiClient {
 
       return response;
     } finally {
-      // Xóa cancel token sau khi hoàn tất
       this.mapRequestCancel.delete(urlRequest);
     }
   }
 }
 
-// Khởi tạo instance duy nhất
 const Api = new ApiClient(axiosInstance);
 export default Api;
