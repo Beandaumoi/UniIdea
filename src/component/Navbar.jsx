@@ -152,7 +152,7 @@ function Navbar() {
                     )}
                   </div>
                   <div>
-                    <span className="block px-4 py-2 text-gray-700 font-semibold mt-2">
+                    <span className="block px-4 py-2 text-gray-700 font-semibold">
                       Giải thưởng
                     </span>
                     {awards.map((award) => (

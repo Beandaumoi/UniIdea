@@ -124,7 +124,7 @@ export default function FacultyManagement() {
         <thead>
           <tr className="bg-gray-200">
             <th className="p-2 w-3/12 text-center">Tên</th>
-            <th className="p-2 w-4/12 text-center">Mô tả</th>
+            {/* <th className="p-2 w-4/12 text-center">Mô tả</th> */}
             <th className="p-2 w-4/12 text-center">Trường</th>
           </tr>
         </thead>
@@ -132,9 +132,9 @@ export default function FacultyManagement() {
           {filteredFaculties.map((faculty) => (
             <tr key={faculty.id} className="border-b">
               <td className="p-2 text-center">{faculty.name}</td>
-              <td className="p-2 text-center">
+              {/* <td className="p-2 text-center">
                 {faculty.description || "N/A"}
-              </td>
+              </td> */}
               <td className="p-2 text-center">
                 {universities.find((u) => u.id === faculty.university_id)
                   ?.name || "N/A"}

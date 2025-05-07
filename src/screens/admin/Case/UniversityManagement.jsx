@@ -236,7 +236,7 @@ export default function UniversityManagement() {
                 {/* <th className="p-3 text-center">ID</th> */}
                 {/* <th className="p-3 text-center">Tên ảnh</th> */}
                 <th className="p-3 text-center">Tên trường</th>
-                <th className="p-3 text-center">Mô tả</th>
+                {/* <th className="p-3 text-center">Mô tả</th> */}
                 <th className="p-3 text-center">Hành động</th>
               </tr>
             </thead>
@@ -252,7 +252,7 @@ export default function UniversityManagement() {
                     )}
                   </td> */}
                   <td className="p-3 text-center">{uni.name}</td>
-                  <td className="p-3 text-center">{uni.description}</td>
+                  {/* <td className="p-3 text-center">{uni.description}</td> */}
                   <td className="p-3 text-center space-x-2">
                     <button
                       className="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition duration-200 cursor-pointer"

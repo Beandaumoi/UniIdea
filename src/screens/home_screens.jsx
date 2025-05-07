@@ -377,7 +377,7 @@ function HomeScreens() {
                             alt="Avatar"
                             className="rounded-md mb-4"
                           />
-                          <p className="mb-4 line-clamp-4 text-justify">
+                          <p className="mb-4 line-clamp-3 text-justify">
                             {idea.description}
                           </p>
 
